@@ -11,7 +11,9 @@ const App = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const chatRef = useRef(null);
+
   let lastMessageTimestamp = null;
 
   useEffect(() => {
@@ -61,6 +63,12 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (isAtBottom && chatRef.current) {
+      chatRef.current.scrollTop = chatRef.current.scrollHeight; // Auto-scroll only if at bottom
+    }
+  }, [chat]);
+
   const sendMessage = () => {
     if (message.trim()) {
       socket.emit("message", { username: username.trim() || "User", message });
@@ -83,9 +91,18 @@ const App = () => {
   };
 
   const handleScroll = () => {
+    if (!chatRef.current) return;
+
+    // Load older messages when scrolled to the top
     if (chatRef.current.scrollTop === 0) {
       loadOlderMessages();
     }
+
+    // Check if the user is at the bottom
+    const isUserAtBottom =
+      chatRef.current.scrollHeight - chatRef.current.scrollTop ===
+      chatRef.current.clientHeight;
+    setIsAtBottom(isUserAtBottom);
   };
 
   return (
