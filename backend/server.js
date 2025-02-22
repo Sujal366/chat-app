@@ -75,7 +75,7 @@ io.on("connection", async (socket) => {
     io.emit("message", { ...data, timestamp });
 
     // Fetch latest messages and emit them to sync all devices
-    const messages = await Message.find().sort({ timestamp: 1 }).limit(50);
+    const messages = await Message.find().sort({ timestamp: -1 }).limit(50);
     io.emit("chatHistory", messages);
   });
 
