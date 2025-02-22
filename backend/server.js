@@ -69,7 +69,14 @@ io.on("connection", async (socket) => {
     const timestamp = new Date().toISOString(); // Ensure consistent timestamp format
     const newMessage = new Message({ ...data, timestamp });
     await newMessage.save(); // Save message to database
+
+    console.log("📩 New message saved:", newMessage);
+
     io.emit("message", { ...data, timestamp });
+
+    // Fetch latest messages and emit them to sync all devices
+    const messages = await Message.find().sort({ timestamp: 1 }).limit(50);
+    io.emit("chatHistory", messages);
   });
 
   // Handle user disconnection
