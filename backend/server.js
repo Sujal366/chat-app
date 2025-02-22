@@ -1,14 +1,14 @@
 // Import required modules
 require("dotenv").config();
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const cors = require("cors");
-const mongoose = require("mongoose");
+import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import { connect, Schema, model } from "mongoose";
 
 // Initialize Express app
 const app = express();
-const server = http.createServer(app);
+const server = createServer(app);
 
 // Enable CORS for frontend connection
 app.use(cors());
@@ -22,8 +22,7 @@ const io = new Server(server, {
 });
 
 // Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, {
+connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
@@ -31,13 +30,13 @@ mongoose
   .catch((err) => console.log("❌ MongoDB connection error:", err));
 
 // Define Message Schema
-const messageSchema = new mongoose.Schema({
+const messageSchema = new Schema({
   username: String,
   message: String,
   timestamp: { type: Date, default: Date.now }, // Store actual date object
 });
 
-const Message = mongoose.model("Message", messageSchema);
+const Message = model("Message", messageSchema);
 
 // Store connected users
 let users = {};
