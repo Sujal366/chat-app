@@ -99,18 +99,22 @@ const App = () => {
       </div>
       <div>
         <b>User Name: </b>
-      <input
-        type="text"
-        placeholder="Enter your name"
-        value={username}
-        onChange={(e) => {
-          const newUsername = e.target.value.trim() || "User";
-          setUsername(newUsername);
-          localStorage.setItem("chatUsername", newUsername);
-          socket.emit("join", newUsername);
-        }}
+        <input
+          type="text"
+          placeholder="Enter your name"
+          value={username}
+          onChange={(e) => {
+            const newUsername = e.target.value; // Don't trim immediately
+            setUsername(newUsername);
+          }}
+          onBlur={() => {
+            const finalUsername = username.trim() || "User";
+            setUsername(finalUsername);
+            localStorage.setItem("chatUsername", finalUsername);
+            socket.emit("join", finalUsername);
+          }}
         />
-        </div>
+      </div>
       <div
         ref={chatRef}
         onScroll={handleScroll}
