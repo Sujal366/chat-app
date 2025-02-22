@@ -1,14 +1,14 @@
 // Import required modules
-import "dotenv/config";
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import cors from "cors";
-import { connect, Schema, model } from "mongoose";
+require("dotenv").config();
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
+const mongoose = require("mongoose");
 
 // Initialize Express app
 const app = express();
-const server = createServer(app);
+const server = http.createServer(app);
 
 // Enable CORS for frontend connection
 app.use(cors());
@@ -21,22 +21,34 @@ const io = new Server(server, {
   },
 });
 
+// Ensure MONGO_URI is defined
+if (!process.env.MONGO_URI) {
+  console.error(
+    "❌ MongoDB connection error: MONGO_URI is not defined in .env file"
+  );
+  process.exit(1);
+}
+
 // Connect to MongoDB
-connect(process.env.MONGO_URI, {
+mongoose
+  .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.log("❌ MongoDB connection error:", err));
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
+  });
 
 // Define Message Schema
-const messageSchema = new Schema({
+const messageSchema = new mongoose.Schema({
   username: String,
   message: String,
   timestamp: { type: Date, default: Date.now }, // Store actual date object
 });
 
-const Message = model("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
 
 // Store connected users
 let users = {};
