@@ -16,7 +16,7 @@ app.use(cors());
 // Initialize WebSocket server
 const io = new Server(server, {
   cors: {
-    origin: "*", // Change this to your frontend URL in production
+    origin: "https://chatting-app-kohl-eight.vercel.app", // Change this to your frontend URL in production
     methods: ["GET", "POST"],
   },
 });
