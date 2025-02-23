@@ -55,8 +55,8 @@ io.on("connection", async (socket) => {
   console.log("✅ A user connected:", socket.id);
 
   // Send chat history to new user (sorted by time)
-  const messages = await Message.find().sort({ timestamp: 1 }).limit(50);
-  socket.emit("chatHistory", messages);
+  const messages = await Message.find().sort({ timestamp: -1 }).limit(50);
+  socket.emit("chatHistory", messages.reverse());
 
   // User joins with a username
   socket.on("join", (username) => {
