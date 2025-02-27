@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 
 const socket = io(process.env.REACT_APP_BACKEND_URL);
+// const socket = io("http://localhost:4000");
 
 const App = () => {
   const [message, setMessage] = useState("");
@@ -12,6 +13,8 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
   const chatRef = useRef(null);
 
   let lastMessageTimestamp = null;
@@ -27,8 +30,6 @@ const App = () => {
     setUsername(savedUsername);
     socket.emit("join", savedUsername);
 
-    //let lastMessageTimestamp = null; // Track last message timestamp
-
     socket.on("chatHistory", (messages) => {
       if (messages.length > 0) {
         lastMessageTimestamp = messages[0].timestamp; // Store timestamp of the first loaded message
@@ -37,6 +38,7 @@ const App = () => {
     });
 
     socket.on("message", (data) => {
+      console.log("Message received on frontend:", data);
       setChat((prevChat) => [...prevChat, data]);
     });
 
@@ -69,9 +71,18 @@ const App = () => {
     }
   }, [chat]);
 
+  // useEffect(() => {
+  //   setPage(1); // Reset page when component mounts
+  //   loadOlderMessages();
+  // }, []);
+
   const sendMessage = () => {
     if (message.trim()) {
-      socket.emit("message", { username: username.trim() || "User", message });
+      socket.emit("message", {
+        username: username.trim() || "User",
+        message,
+        color: "black",
+      });
       setMessage("");
     }
   };
@@ -79,15 +90,19 @@ const App = () => {
   const loadOlderMessages = () => {
     if (loading || !hasMore) return;
     setLoading(true);
-    socket.emit("loadOlderMessages", lastMessageTimestamp, (olderMessages) => {
-      if (olderMessages.length === 0) {
-        setHasMore(false);
-      } else {
-        lastMessageTimestamp = olderMessages[0].timestamp;
-        setChat((prevChat) => [...olderMessages, ...prevChat]);
-      }
-      setLoading(false);
-    });
+
+    fetch(`http://localhost:4000/getMessages?page=${page}&limit=${limit}`)
+      .then((response) => response.json())
+      .then((olderMessages) => {
+        if (olderMessages.length === 0) {
+          setHasMore(false);
+        } else {
+          setChat((prevChat) => [...olderMessages, ...prevChat]); // Append at the top
+          setPage(page + 1); // Move to next page
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   };
 
   const handleScroll = () => {
@@ -144,22 +159,20 @@ const App = () => {
         }}
       >
         {loading && <p>Loading more messages...</p>}
-        {chat.map((msg, index) => (
-          <p key={index} style={{ color: msg.system ? "gray" : "black" }}>
-            {msg.system ? (
-              <>
-                ⚠️ {msg.username} {msg.message}
-              </>
-            ) : (
-              <>
-                <strong>{msg.username}:</strong> {msg.message}{" "}
-                <em style={{ fontSize: "0.8em", color: "gray" }}>
-                  ({new Date(msg.timestamp).toLocaleTimeString()})
-                </em>
-              </>
-            )}
-          </p>
-        ))}
+        {chat.map((msg, index) =>
+          msg.system ? (
+            <p key={index} style={{ color: msg.color || "black" }}>
+              {msg.color === "red" ? "⚠️" : "🟢"} {msg.username} {msg.message}
+            </p>
+          ) : (
+            <p key={index} style={{ color: msg.color || "black" }}>
+              <strong>{msg.username}:</strong> {msg.message}{" "}
+              <em style={{ fontSize: "0.8em", color: "gray" }}>
+                ({new Date(msg.timestamp).toLocaleTimeString()})
+              </em>
+            </p>
+          )
+        )}
         {typingUser && (
           <p style={{ fontStyle: "italic", color: "gray" }}>{typingUser}</p>
         )}
@@ -173,7 +186,7 @@ const App = () => {
           socket.emit("typing", username.trim() ? username : "User");
           setTimeout(() => {
             socket.emit("stopTyping");
-          }, 1000);
+          }, 2000);
         }}
       />
       <button onClick={sendMessage}>Send</button>
