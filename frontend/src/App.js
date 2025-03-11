@@ -38,7 +38,6 @@ const App = () => {
     });
 
     socket.on("message", (data) => {
-      console.log("Message received on frontend:", data);
       setChat((prevChat) => [...prevChat, data]);
     });
 
@@ -121,7 +120,20 @@ const App = () => {
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div
+      style={{
+        padding: "20px",
+        backgroundColor: "black",
+        color: "white",
+        // this div should cover full screen
+        position: "fixed",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        overflow: "auto",
+      }}
+    >
       <h2>Chat App 💬</h2>
       <div style={{ display: "flex", alignItems: "center" }}>
         <h4>Online Users:</h4>
@@ -153,6 +165,7 @@ const App = () => {
         style={{
           marginTop: "20px",
           border: "1px solid #ccc",
+          backgroundColor: "oklch(0.872 0.01 258.338)",
           padding: "10px",
           height: "300px",
           overflowY: "scroll",
@@ -181,6 +194,7 @@ const App = () => {
         type="text"
         placeholder="Type a message..."
         value={message}
+        style={{ marginTop: "10px", marginRight: "10px"}}
         onChange={(e) => {
           setMessage(e.target.value);
           socket.emit("typing", username.trim() ? username : "User");
